@@ -1,0 +1,39 @@
+{
+  "name": "truthy",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@mantine/core": "^7.6.1",
+    "@mantine/hooks": "^7.6.1",
+    "@mantine/notifications": "^7.6.1",
+    "@tabler/icons-react": "^2.47.0",
+    "@tauri-apps/api": "^1",
+    "kdbxweb": "^2.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.23.1",
+    "totp-generator": "^1.0.0",
+    "vite-plugin-svgr": "^4.2.0",
+    "whatwg-url": "^14.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1",
+    "@types/node": "^20.14.2",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@types/whatwg-url": "^11.0.5",
+    "@vitejs/plugin-react": "^4.2.1",
+    "postcss": "^8.4.38",
+    "postcss-preset-mantine": "^1.15.0",
+    "postcss-simple-vars": "^7.0.1",
+    "typescript": "^5.0.2",
+    "vite": "^5.0.0"
+  }
+}

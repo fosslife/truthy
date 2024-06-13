@@ -1,0 +1,46 @@
+.card {
+  position: relative;
+  &:hover {
+    .editIcon {
+      display: block;
+    }
+
+    .copyIcon {
+      display: block;
+    }
+  }
+}
+
+.blur {
+  background-color: white;
+
+  filter: blur(15px);
+}
+
+.editIcon {
+  padding: 6px;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  cursor: pointer;
+  display: none;
+
+  /* Show icon always if mobile device */
+  @media screen and (max-width: 768px) {
+    display: block;
+  }
+}
+
+.copyIcon {
+  padding: 6px;
+  position: absolute;
+  top: 50px;
+  right: 14px;
+  cursor: pointer;
+  display: none;
+
+  /* Show icon always if mobile device */
+  @media screen and (max-width: 768px) {
+    display: block;
+  }
+}

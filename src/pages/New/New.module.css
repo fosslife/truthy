@@ -1,0 +1,17 @@
+.avatar {
+  position: relative;
+
+  &:hover {
+    .editIcon {
+      bottom: 10px;
+    }
+  }
+}
+
+.editIcon {
+  position: absolute;
+  bottom: -40px;
+  right: 10px;
+  /* animate  */
+  transition: bottom 0.2s;
+}
