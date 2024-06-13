@@ -2,7 +2,7 @@
 (didn't want to call it tauthy or Taegis)
 
 
-![Logo](assets/banner.jpeg)
+![Logo](banner.jpeg)
 
 ## Badges
 
