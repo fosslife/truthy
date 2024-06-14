@@ -19,9 +19,9 @@ type ImportOptions =
 
 const importOptions: ImportOptions[] = [
   "Aegis",
-  "Authy",
-  "Google Authenticator",
-  "Microsoft Authenticator",
+  // "Authy",
+  // "Google Authenticator",
+  // "Microsoft Authenticator",
 ];
 
 function ImportModalBase({ isOpen, onClose, closeDrawer }: ImportModalProps) {
