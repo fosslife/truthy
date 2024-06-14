@@ -17,6 +17,7 @@ import { IconMoonStars, IconSun } from "@tabler/icons-react";
 import { ImportModal } from "../../../components/Modals/ImportModal";
 import { useSettings, Settings } from "../../../contexts/Settings";
 import { ExportModal } from "../../../components/Modals/ExportModal";
+import { ChangePasswordModal } from "../../../components/Modals/ChangePasswordModal";
 
 type Props = {
   drawerOpened: boolean;
@@ -31,6 +32,11 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
 
   const [exportOpen, { close: closeExport, open: openExport }] =
     useDisclosure();
+
+  const [
+    changePasswordOpen,
+    { close: closeChangePassword, open: openChangePassword },
+  ] = useDisclosure();
 
   const { settings, setSettings } = useSettings();
 
@@ -147,7 +153,7 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
         </Title>
 
         <Group>
-          <Button onClick={() => {}}>Change master password</Button>
+          <Button onClick={openChangePassword}>Change master password</Button>
         </Group>
       </Stack>
       {/* planned settings:
@@ -162,6 +168,11 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
       />
 
       <ExportModal isOpen={exportOpen} onClose={closeExport} />
+      <ChangePasswordModal
+        opened={changePasswordOpen}
+        onClose={closeChangePassword}
+        sidebarClose={closeDrawer}
+      />
     </Drawer>
   );
 };
