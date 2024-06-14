@@ -11,10 +11,14 @@
   }
 }
 
-.blur {
-  background-color: white;
+.card:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
 
-  filter: blur(15px);
+.blur {
+  background-color: rgba(255, 255, 255, 0.1);
+
+  filter: blur(7px);
 }
 
 .editIcon {
@@ -43,4 +47,8 @@
   @media screen and (max-width: 768px) {
     display: block;
   }
+}
+
+.compactCard:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }

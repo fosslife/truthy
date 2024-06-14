@@ -6,6 +6,7 @@ export type Settings = {
   blurMode: boolean;
   digitGrouping: string;
   minimizeOnCopy: boolean;
+  view: "compact" | "card";
 };
 
 type SettingsContext = {
@@ -20,8 +21,9 @@ export const SettingsContext = createContext<SettingsContext>({
 
 const defaultSettings: Settings = {
   blurMode: false,
-  digitGrouping: "2",
+  digitGrouping: "3",
   minimizeOnCopy: false,
+  view: "card",
 };
 
 export const SettingsContextProvider = ({

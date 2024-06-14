@@ -1,10 +1,13 @@
 import {
   ActionIcon,
   Avatar,
+  Box,
   CopyButton,
   Flex,
   Group,
   Paper,
+  Stack,
+  Table,
   Text,
   Title,
   Tooltip,
@@ -15,8 +18,7 @@ import { OtpObject } from "..";
 import { clipboard } from "@tauri-apps/api";
 import { appWindow } from "@tauri-apps/api/window";
 import { useNavigate } from "react-router-dom";
-import { useContext } from "react";
-import { SettingsContext } from "../../../contexts/Settings";
+import { useSettings } from "../../../contexts/Settings";
 import { renderIcon } from "../../../utils/icons";
 
 type CardProps = {
@@ -26,12 +28,48 @@ type CardProps = {
 export function Card({ e }: CardProps) {
   const nav = useNavigate();
 
-  const { settings } = useContext(SettingsContext);
+  const { settings } = useSettings();
+
+  const viewMode = settings.view;
 
   const regexString = new RegExp(
     `(\\d)(?=(\\d{${settings.digitGrouping}})+(?!\\d))`,
     "g"
   );
+
+  if (viewMode === "compact") {
+    return (
+      <Paper
+        withBorder
+        shadow="xs"
+        radius="md"
+        p="xs"
+        className={classes.compactCard}
+        onClick={() => nav(`/edit/${e.id}`, { replace: true })}
+      >
+        <Group justify="space-between" align="center" wrap="nowrap">
+          <Group>
+            <Avatar radius="xs" size={"md"} color={e.color}>
+              {e.icon
+                ? renderIcon(e.icon, 60)
+                : e.issuer
+                ? e.issuer[0].toUpperCase()
+                : e.label[0].toUpperCase()}
+            </Avatar>
+            <Stack gap={0}>
+              <Title order={6}>
+                {decodeURIComponent(e.issuer ? e.issuer : e.label || "")}
+              </Title>
+              <Text>{decodeURIComponent(!e.issuer ? "" : e.label)}</Text>
+            </Stack>
+          </Group>
+          <Box className={settings?.blurMode ? classes.blur : undefined}>
+            {e.otp?.replace(regexString, "$1 ")}
+          </Box>
+        </Group>
+      </Paper>
+    );
+  }
 
   return (
     <Paper
