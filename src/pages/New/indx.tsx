@@ -125,6 +125,7 @@ function EntryDetails() {
     const entry = db?.createEntry(group!);
 
     recordEntity(newEntry, entry!);
+    entry?.fields.set("islatest", "true");
 
     const save = await db?.save();
     await savedb(save);

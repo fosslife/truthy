@@ -22,10 +22,11 @@ import { useSettings } from "../../../contexts/Settings";
 import { renderIcon } from "../../../utils/icons";
 
 type CardProps = {
+  isLatest: boolean;
   e: OtpObject;
 };
 
-export function Card({ e }: CardProps) {
+export function Card({ e, isLatest }: CardProps) {
   const nav = useNavigate();
 
   const { settings } = useSettings();
@@ -79,7 +80,9 @@ export function Card({ e }: CardProps) {
       p="xl"
       className={classes.card}
       h="100%"
+      id={isLatest ? "latest" : undefined}
       style={{
+        zIndex: isLatest ? 3 : undefined,
         overflow: "hidden",
       }}
     >

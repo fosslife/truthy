@@ -1,4 +1,4 @@
-import { Grid, Stack, useMantineColorScheme } from "@mantine/core";
+import { Box, Grid, Stack, useMantineColorScheme } from "@mantine/core";
 import { Navbar } from "./components/Navbar";
 import { useTimer } from "../../utils/hooks/useTimer";
 import { useAppContext } from "../../contexts/App";
@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { TOTP } from "totp-generator";
 import { Card } from "./components/Card";
 import { useSettings } from "../../contexts/Settings";
+import { savedb } from "../../utils/kdbx";
 
 export type OtpObject = {
   id: string;
@@ -31,6 +32,7 @@ export default function Home() {
 
   const time = useTimer();
   const [entries, setEntries] = useState<OtpObject[]>([]);
+  const [latest, setLatest] = useState<any>(null);
   const nav = useNavigate();
 
   const idle = useIdle(import.meta.env.DEV ? 5000000 : 50 * 1000, {
@@ -47,7 +49,7 @@ export default function Home() {
   }, [idle]);
 
   useEffect(() => {
-    (() => {
+    (async () => {
       if (!group) return;
       let temp: OtpObject[] = [];
       for (const entry of group?.entries) {
@@ -64,11 +66,33 @@ export default function Home() {
           otp: "",
           color: entry.fields.get("color")?.toString()!,
         });
+
+        if (entry.fields.get("islatest")) {
+          setLatest(entry.fields.get("id")?.toString()!);
+          entry.fields.delete("islatest");
+          const updated = await db?.save();
+          await savedb(updated);
+        }
       }
       setEntries(temp);
       handleEntries(temp);
     })();
   }, [db, group?.entries, rerender]);
+
+  useEffect(() => {
+    if (latest) {
+      document.getElementById("latest")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+      const timeout = setTimeout(() => {
+        setLatest(null);
+      }, 5000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [latest]);
 
   const memoisedEntries = useMemo(() => {
     return entries.map((e) => {
@@ -99,6 +123,19 @@ export default function Home() {
       />
       <MainModal onClose={close} opened={mainModalOpen} />
 
+      <Box
+        style={{
+          zIndex: 2,
+          position: "fixed",
+          bottom: 0,
+          right: 0,
+          top: 0,
+          left: 0,
+          backdropFilter: "brightness(0.3)",
+          display: latest ? "block" : "none",
+        }}
+      ></Box>
+
       <Grid p="md" align="stretch" justify="start" style={{ height: "100%" }}>
         {memoisedEntries
           .filter(
@@ -120,7 +157,7 @@ export default function Home() {
                     }
               }
             >
-              <Card e={e}></Card>
+              <Card e={e} isLatest={e.id === latest}></Card>
             </Grid.Col>
           ))}
       </Grid>
@@ -128,9 +165,6 @@ export default function Home() {
   );
 }
 
-// TODO: view mode: compact, tiles, cards etc.
-// TODO: add settings
-// TODO: advance config for OTP
 // TODO: tap to reveal
 // TODO: support `note`
 // TODO: lock user after 3 failed attempts
