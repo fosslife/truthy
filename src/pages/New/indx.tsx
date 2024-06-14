@@ -77,6 +77,7 @@ function EntryDetails() {
     if (params.id !== undefined) {
       const e = group?.entries.find((e) => e.fields.get("id") === params.id);
       if (e) {
+        e.times.update();
         setLabel(e.fields.get("label")!?.toString());
         setSecret(e.fields.get("secret")!?.toString());
         setIssuer(e.fields.get("issuer")!?.toString());
@@ -171,7 +172,7 @@ function EntryDetails() {
           <IconArrowLeft />
         </ActionIcon>
       </Box>
-      <Group p="xl">
+      <Stack p="xl">
         <Avatar
           size={breakpoint ? 220 : "xl"}
           color={color}
@@ -187,7 +188,7 @@ function EntryDetails() {
             <IconEdit />
           </ActionIcon>
         </Avatar>
-      </Group>
+      </Stack>
       <Stack p="xl" w={breakpoint ? "40%" : "100%"}>
         {!isEditing && (
           <>

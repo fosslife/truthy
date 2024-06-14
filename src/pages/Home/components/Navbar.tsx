@@ -1,4 +1,11 @@
-import { ActionIcon, Button, Group, Stack, TextInput } from "@mantine/core";
+import {
+  ActionIcon,
+  Button,
+  Group,
+  Stack,
+  TextInput,
+  useMantineColorScheme,
+} from "@mantine/core";
 import { IconSettings } from "@tabler/icons-react";
 import { Sidebar } from "./Sidebar";
 import { useDisclosure } from "@mantine/hooks";
@@ -18,8 +25,18 @@ export function Navbar({
   time,
 }: NavbarProps) {
   const [drawerOpened, { open, close }] = useDisclosure();
+  const { colorScheme } = useMantineColorScheme();
+
   return (
-    <Stack gap={0}>
+    <Stack
+      gap={0}
+      pos={"sticky"}
+      top={0}
+      style={{
+        zIndex: 2,
+      }}
+      bg={colorScheme === "dark" ? "dark.9" : "gray.2"}
+    >
       <ProgressBar time={time} />
       <Group p="xs" justify="space-around" wrap="nowrap" pt="sm" style={{}}>
         <ActionIcon variant="filled" onClick={open}>
