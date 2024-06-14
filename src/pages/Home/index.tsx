@@ -8,6 +8,7 @@ import { MainModal } from "../../components/Modals/MainModal";
 import { useEffect, useMemo, useState } from "react";
 import { TOTP } from "totp-generator";
 import { Card } from "./components/Card";
+import { useSettings } from "../../contexts/Settings";
 
 export type OtpObject = {
   id: string;
@@ -24,6 +25,7 @@ export type OtpObject = {
 };
 
 export default function Home() {
+  const [search, setSearch] = useState<string>("");
   const [mainModalOpen, { open, close }] = useDisclosure();
   const { colorScheme } = useMantineColorScheme();
 
@@ -35,7 +37,8 @@ export default function Home() {
     initialState: false,
   });
 
-  const { db, group, rerender } = useAppContext();
+  const { db, group, rerender, handleEntries } = useAppContext();
+  const { settings } = useSettings();
 
   useEffect(() => {
     if (idle) {
@@ -63,6 +66,7 @@ export default function Home() {
         });
       }
       setEntries(temp);
+      handleEntries(temp);
     })();
   }, [db, group?.entries, rerender]);
 
@@ -89,26 +93,36 @@ export default function Home() {
     >
       <Navbar
         openMainModal={open}
-        search={""}
-        setSearch={() => {}}
+        search={search}
+        setSearch={(str) => setSearch(str.toLowerCase())}
         time={time}
       />
       <MainModal onClose={close} opened={mainModalOpen} />
 
       <Grid p="md" align="stretch" justify="start" style={{ height: "100%" }}>
-        {memoisedEntries.map((e) => (
-          <Grid.Col
-            key={e.id}
-            span={{
-              base: 12,
-              sm: 6,
-              md: 4,
-              lg: 3,
-            }}
-          >
-            <Card e={e}></Card>
-          </Grid.Col>
-        ))}
+        {memoisedEntries
+          .filter(
+            (e) =>
+              e.label.toLowerCase().includes(search) ||
+              e.issuer.toLowerCase().includes(search)
+          )
+          .map((e) => (
+            <Grid.Col
+              key={e.id}
+              span={
+                settings.view === "compact"
+                  ? 12
+                  : {
+                      base: 12,
+                      sm: 6,
+                      md: 4,
+                      lg: 3,
+                    }
+              }
+            >
+              <Card e={e}></Card>
+            </Grid.Col>
+          ))}
       </Grid>
     </Stack>
   );
