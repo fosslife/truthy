@@ -2,27 +2,43 @@ import {
   ActionIcon,
   Button,
   Group,
+  Menu,
   Stack,
   TextInput,
+  ThemeIcon,
+  rem,
   useMantineColorScheme,
 } from "@mantine/core";
-import { IconSettings } from "@tabler/icons-react";
+import {
+  IconBrandDaysCounter,
+  IconCalendar,
+  IconSettings,
+  IconSort09,
+  IconSortAZ,
+  IconSortAscending,
+  IconSortAscending2,
+  IconSortDescending2,
+  IconSortZA,
+} from "@tabler/icons-react";
 import { Sidebar } from "./Sidebar";
 import { useDisclosure } from "@mantine/hooks";
 import { ProgressBar } from "./Progress";
+import { SortType, SortOrder } from "..";
 
 type NavbarProps = {
-  openMainModal: () => void;
   search: string;
-  setSearch: (s: string) => void;
   time: number;
+  setSearch: (s: string) => void;
+  openMainModal: () => void;
+  handleSortType: (sortType: SortType, sortOrder?: SortOrder) => void;
 };
 
 export function Navbar({
-  openMainModal,
   search,
-  setSearch,
   time,
+  setSearch,
+  openMainModal,
+  handleSortType,
 }: NavbarProps) {
   const [drawerOpened, { open, close }] = useDisclosure();
   const { colorScheme } = useMantineColorScheme();
@@ -49,6 +65,75 @@ export function Navbar({
           flex={1}
           onChange={(e) => setSearch(e.currentTarget.value)}
         />
+        <Menu shadow="md" width={150}>
+          <Menu.Target>
+            <ActionIcon variant="filled" size={"lg"}>
+              <IconSortAscending />
+            </ActionIcon>
+          </Menu.Target>
+
+          <Menu.Dropdown>
+            <Menu.Item
+              onClick={() => handleSortType("label", "asc")}
+              leftSection={
+                <IconSortAZ style={{ width: rem(24), height: rem(24) }} />
+              }
+            >
+              Label Asc
+            </Menu.Item>
+
+            <Menu.Item
+              onClick={() => handleSortType("label", "desc")}
+              leftSection={
+                <IconSortZA style={{ width: rem(24), height: rem(24) }} />
+              }
+            >
+              Label Desc
+            </Menu.Item>
+
+            <Menu.Item
+              onClick={() => handleSortType("issuer", "asc")}
+              leftSection={
+                <IconSortAscending2
+                  style={{ width: rem(24), height: rem(24) }}
+                />
+              }
+            >
+              Issuer Asc
+            </Menu.Item>
+            <Menu.Item
+              onClick={() => handleSortType("issuer", "desc")}
+              leftSection={
+                <IconSortDescending2
+                  style={{ width: rem(24), height: rem(24) }}
+                />
+              }
+            >
+              Issuer Desc
+            </Menu.Item>
+
+            <Menu.Item
+              disabled
+              onClick={() => handleSortType("usage count")}
+              leftSection={
+                <IconBrandDaysCounter
+                  style={{ width: rem(24), height: rem(24) }}
+                />
+              }
+            >
+              Most used
+            </Menu.Item>
+            <Menu.Item
+              disabled
+              onClick={() => handleSortType("last used")}
+              leftSection={
+                <IconCalendar style={{ width: rem(24), height: rem(24) }} />
+              }
+            >
+              Last used
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
         <Button rightSection={"+"} onClick={openMainModal} variant="filled">
           Add New{" "}
         </Button>

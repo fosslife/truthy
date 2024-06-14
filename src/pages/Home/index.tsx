@@ -23,12 +23,20 @@ export type OtpObject = {
   icon?: string;
   otp?: string;
   color?: string;
+  lastUsed?: Date;
 };
+
+export type SortType = "label" | "issuer" | "usage count" | "last used";
+
+export type SortOrder = "asc" | "desc";
 
 export default function Home() {
   const [search, setSearch] = useState<string>("");
   const [mainModalOpen, { open, close }] = useDisclosure();
   const { colorScheme } = useMantineColorScheme();
+
+  const [sortType, setSortType] = useState<SortType>("label");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   const time = useTimer();
   const [entries, setEntries] = useState<OtpObject[]>([]);
@@ -65,6 +73,7 @@ export default function Home() {
           icon: entry.fields.get("icon")?.toString()!,
           otp: "",
           color: entry.fields.get("color")?.toString()!,
+          lastUsed: entry.times.lastAccessTime,
         });
 
         if (entry.fields.get("islatest")) {
@@ -94,6 +103,13 @@ export default function Home() {
     }
   }, [latest]);
 
+  const handleSortType = (type: SortType, order?: SortOrder) => {
+    setSortType(type);
+    if (order) {
+      setSortOrder(order);
+    }
+  };
+
   const memoisedEntries = useMemo(() => {
     return entries.map((e) => {
       if (!e.secret) return e;
@@ -103,6 +119,35 @@ export default function Home() {
       };
     });
   }, [entries, time < 2]);
+
+  const sortedEntries = useMemo(() => {
+    return memoisedEntries.sort((a, b) => {
+      if (sortType === "label") {
+        return sortOrder === "asc"
+          ? a.label.localeCompare(b.label)
+          : b.label.localeCompare(a.label);
+      } else if (sortType === "issuer") {
+        return sortOrder === "asc"
+          ? a.issuer.localeCompare(b.issuer)
+          : b.issuer.localeCompare(a.issuer);
+      } else if (sortType === "usage count") {
+        return sortOrder === "asc"
+          ? a.counter - b.counter
+          : b.counter - a.counter;
+      } else if (sortType === "last used") {
+        return sortOrder === "asc"
+          ? (a.lastUsed &&
+              b.lastUsed &&
+              a.lastUsed.getTime() - b.lastUsed.getTime()) ||
+              0
+          : (b.lastUsed &&
+              a.lastUsed &&
+              b.lastUsed.getTime() - a.lastUsed.getTime()) ||
+              0;
+      }
+      return 0;
+    });
+  }, [memoisedEntries, sortType, sortOrder]);
 
   if (!db) {
     return <Navigate to="/" />;
@@ -118,8 +163,9 @@ export default function Home() {
       <Navbar
         openMainModal={open}
         search={search}
-        setSearch={(str) => setSearch(str.toLowerCase())}
         time={time}
+        setSearch={(str) => setSearch(str.toLowerCase())}
+        handleSortType={handleSortType}
       />
       <MainModal onClose={close} opened={mainModalOpen} />
 
@@ -137,7 +183,7 @@ export default function Home() {
       ></Box>
 
       <Grid p="md" align="stretch" justify="start" style={{ height: "100%" }}>
-        {memoisedEntries
+        {sortedEntries
           .filter(
             (e) =>
               e.label.toLowerCase().includes(search) ||
@@ -165,9 +211,5 @@ export default function Home() {
   );
 }
 
-// TODO: tap to reveal
-// TODO: support `note`
 // TODO: lock user after 3 failed attempts
-// TODO: 3 wrong attemps locks out for 5 minutes?
-// TODO: search
 // TODO: add logging for every step, exlude secrets
