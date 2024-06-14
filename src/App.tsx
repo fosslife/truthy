@@ -23,6 +23,10 @@ function App() {
 
   const validate = async () => {
     if (firstTime) {
+      if (!password || !password2) {
+        error("Password cannot be empty");
+        return;
+      }
       if (password !== password2) {
         error("Passwords do not match");
         return;
@@ -51,6 +55,10 @@ function App() {
 
       navigate("/home");
     } else {
+      if (!password) {
+        error("Password cannot be empty");
+        return;
+      }
       const creds = new kdbxweb.Credentials(
         kdbxweb.ProtectedValue.fromString(password)
       );
@@ -60,9 +68,18 @@ function App() {
       });
 
       const contents = _base64ToArrayBuffer(b64);
-
-      const db = await kdbxweb.Kdbx.load(contents, creds);
-      loadDb(db);
+      try {
+        const db = await kdbxweb.Kdbx.load(contents, creds);
+        loadDb(db);
+      } catch (e) {
+        console.error(e);
+        if ((e as any).code === "InvalidKey") {
+          error("Invalid password");
+        } else {
+          error("An error occurred while trying to open the vault");
+        }
+        return;
+      }
 
       navigate("/home");
     }
