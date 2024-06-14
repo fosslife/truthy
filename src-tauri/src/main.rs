@@ -13,6 +13,13 @@ fn main() {
 
             Ok(())
         })
+        // .on_window_event(|event| match event.event() {
+        //  this is working but use-idle on FE is not working!
+        //     tauri::WindowEvent::Focused(focus) => {
+        //         event.window().emit("visibilitychanged", focus).unwrap();
+        //     }
+        //     _ => (),
+        // })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
