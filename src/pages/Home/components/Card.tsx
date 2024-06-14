@@ -7,7 +7,6 @@ import {
   Group,
   Paper,
   Stack,
-  Table,
   Text,
   Title,
   Tooltip,

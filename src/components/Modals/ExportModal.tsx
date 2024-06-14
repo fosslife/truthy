@@ -189,6 +189,7 @@ async function encrypt(plaintext: string, password: string) {
 }
 
 // Unused for now, but make a new modal that can decrypt.
+// @ts-ignore
 async function aesGcmDecrypt(ciphertext: string, password: string) {
   const pwUtf8 = new TextEncoder().encode(password); // encode password as UTF-8
   const pwHash = await crypto.subtle.digest("SHA-256", pwUtf8); // hash the password

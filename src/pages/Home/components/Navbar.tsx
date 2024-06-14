@@ -5,7 +5,6 @@ import {
   Menu,
   Stack,
   TextInput,
-  ThemeIcon,
   rem,
   useMantineColorScheme,
 } from "@mantine/core";
@@ -13,7 +12,6 @@ import {
   IconBrandDaysCounter,
   IconCalendar,
   IconSettings,
-  IconSort09,
   IconSortAZ,
   IconSortAscending,
   IconSortAscending2,
