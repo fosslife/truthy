@@ -1,12 +1,15 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAppContext } from "./App";
 import { savedb } from "../utils/kdbx";
+import { baseColors } from "../utils/random";
+import { useTheme } from "./Theme";
 
 export type Settings = {
   blurMode: boolean;
   digitGrouping: string;
   minimizeOnCopy: boolean;
   view: "compact" | "card";
+  theme: (typeof baseColors)[number];
 };
 
 type SettingsContext = {
@@ -24,6 +27,7 @@ const defaultSettings: Settings = {
   digitGrouping: "3",
   minimizeOnCopy: false,
   view: "card",
+  theme: "brand",
 };
 
 export const SettingsContextProvider = ({
@@ -33,6 +37,7 @@ export const SettingsContextProvider = ({
 }) => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const { db, group } = useAppContext();
+  const { changePrimaryColor } = useTheme();
 
   useEffect(() => {
     if (!db) return;
@@ -47,7 +52,9 @@ export const SettingsContextProvider = ({
     async function init() {
       const settings = db?.meta.customData?.get("settings");
       if (settings) {
-        setSettings(JSON.parse(settings.value!));
+        const s = JSON.parse(settings.value!);
+        setSettings(s);
+        changePrimaryColor(s.theme);
         return;
       }
       setSettings({ ...defaultSettings });

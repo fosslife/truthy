@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "truthy",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "tauri": {
     "allowlist": {
@@ -30,12 +30,12 @@
       },
       "fs": {
         "all": true,
-        "scope": ["**"]
+        "scope": ["$APPDATA", "$APPDATA/vault.kdbx", "$APPLOG"]
       },
       "window": {
         "all": false,
         "center": false,
-        "close": false,
+        "close": true,
         "create": false,
         "hide": false,
         "maximize": false,

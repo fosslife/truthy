@@ -49,7 +49,7 @@ function App() {
       const b64 = _arrayBufferToBase64(contents);
 
       await writeTextFile("vault.kdbx", b64, {
-        dir: BaseDirectory.App,
+        dir: BaseDirectory.AppData,
       });
       loadDb(db);
 
@@ -64,7 +64,7 @@ function App() {
       );
 
       const b64 = await readTextFile("vault.kdbx", {
-        dir: BaseDirectory.App,
+        dir: BaseDirectory.AppData,
       });
 
       const contents = _base64ToArrayBuffer(b64);
@@ -88,7 +88,7 @@ function App() {
   useEffect(() => {
     (async () => {
       const fileExists = await exists("vault.kdbx", {
-        dir: BaseDirectory.App,
+        dir: BaseDirectory.AppData,
       });
       setFirstTime(!fileExists);
     })();

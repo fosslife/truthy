@@ -111,7 +111,6 @@ export function Navbar({
             </Menu.Item>
 
             <Menu.Item
-              disabled
               onClick={() => handleSortType("usage count")}
               leftSection={
                 <IconBrandDaysCounter
@@ -122,7 +121,6 @@ export function Navbar({
               Most used
             </Menu.Item>
             <Menu.Item
-              disabled
               onClick={() => handleSortType("last used")}
               leftSection={
                 <IconCalendar style={{ width: rem(24), height: rem(24) }} />

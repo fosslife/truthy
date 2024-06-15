@@ -75,15 +75,11 @@ export function MainModalBase({ onClose, opened }: QrModalProps) {
           onClick={() => {
             onClose();
             nav("/new", { replace: true });
-            // openManual();
           }}
-          variant="light"
         >
           Add Manually
         </Button>
-        <Button onClick={readQr} variant="light">
-          Read QR Code
-        </Button>
+        <Button onClick={readQr}>Read QR Code</Button>
       </Stack>
     </Opener>
   );

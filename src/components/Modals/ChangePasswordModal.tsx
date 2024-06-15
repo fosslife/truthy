@@ -34,7 +34,7 @@ export function ChangePasswordModal({
         kdbxweb.ProtectedValue.fromString(currentPassword)
       );
       const b64 = await readTextFile("vault.kdbx", {
-        dir: BaseDirectory.App,
+        dir: BaseDirectory.AppData,
       });
       const contents = _base64ToArrayBuffer(b64);
       await kdbxweb.Kdbx.load(contents, creds);

@@ -130,7 +130,7 @@ function ExportModalBase({ isOpen, onClose }: ExportModalProps) {
 
     if (path) {
       await copyFile("vault.kdbx", path, {
-        dir: BaseDirectory.App,
+        dir: BaseDirectory.AppData,
       });
       notifications.show({
         message: "Exported KDBX",

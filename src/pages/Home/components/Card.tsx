@@ -133,6 +133,8 @@ export function Card({ e, isLatest }: CardProps) {
             color={copied ? "teal" : undefined}
             onClick={async () => {
               copy();
+              e.entry?.fields.set("counter", (e.counter + 1).toString());
+              e.entry?.times.update();
               await clipboard.writeText(e.otp!);
               if (settings.minimizeOnCopy) {
                 appWindow.minimize();
