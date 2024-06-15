@@ -53,11 +53,14 @@ const theme = createTheme({
 });
 
 (async () => {
-  const appdir = await appDataDir();
+  const appDatadir = await appDataDir();
+  console.log("appDatadir", appDatadir);
 
-  const appDirExists = await exists(appdir);
-  if (!appDirExists) {
-    await createDir(appdir);
+  const addExists = await exists(appDatadir);
+  console.log("app dir exists?", addExists);
+  if (!addExists) {
+    await createDir(appDatadir);
+    console.log("App dir created");
   }
 })();
 

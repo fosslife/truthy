@@ -30,7 +30,7 @@
       },
       "fs": {
         "all": true,
-        "scope": ["**"]
+        "scope": ["$APPDATA", "$APPDATA/vault.kdbx", "$APPLOG"]
       },
       "window": {
         "all": false,
