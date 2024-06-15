@@ -77,7 +77,6 @@ function EntryDetails() {
     if (params.id !== undefined) {
       const e = group?.entries.find((e) => e.fields.get("id") === params.id);
       if (e) {
-        e.times.update();
         setLabel(e.fields.get("label")!?.toString());
         setSecret(e.fields.get("secret")!?.toString());
         setIssuer(e.fields.get("issuer")!?.toString());
@@ -126,6 +125,7 @@ function EntryDetails() {
 
     recordEntity(newEntry, entry!);
     entry?.fields.set("islatest", "true");
+    entry?.times.update();
 
     const save = await db?.save();
     await savedb(save);
@@ -254,7 +254,13 @@ function EntryDetails() {
         )}
       </Stack>
 
-      <Modal opened={opened} onClose={close} title="Pick icon">
+      <Modal
+        opened={opened}
+        onClose={close}
+        title="Pick icon"
+        // This will make icons render slower but page load faster
+        keepMounted={false}
+      >
         <Stack>
           <SearchBox onChange={setIconSearch} />
           <Group justify="center">

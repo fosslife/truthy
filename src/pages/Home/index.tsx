@@ -10,6 +10,8 @@ import { TOTP } from "totp-generator";
 import { Card } from "./components/Card";
 import { useSettings } from "../../contexts/Settings";
 import { savedb } from "../../utils/kdbx";
+import { KdbxEntry } from "kdbxweb";
+import { appWindow } from "@tauri-apps/api/window";
 
 export type OtpObject = {
   id: string;
@@ -24,6 +26,7 @@ export type OtpObject = {
   otp?: string;
   color?: string;
   lastUsed?: Date;
+  entry?: KdbxEntry;
 };
 
 export type SortType = "label" | "issuer" | "usage count" | "last used";
@@ -74,6 +77,7 @@ export default function Home() {
           otp: "",
           color: entry.fields.get("color")?.toString()!,
           lastUsed: entry.times.lastAccessTime,
+          entry: entry,
         });
 
         if (entry.fields.get("islatest")) {
@@ -103,6 +107,22 @@ export default function Home() {
     }
   }, [latest]);
 
+  useEffect(() => {
+    const unlisten = appWindow.onCloseRequested(async () => {
+      const content = await db?.save();
+      savedb(content);
+    });
+
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
+
+  useEffect(() => {
+    db?.meta.customData.set("sortType", { value: sortType });
+    db?.meta.customData.set("sortOrder", { value: sortOrder });
+  }, [sortOrder, sortType]);
+
   const handleSortType = (type: SortType, order?: SortOrder) => {
     setSortType(type);
     if (order) {
@@ -121,29 +141,33 @@ export default function Home() {
   }, [entries, time < 2]);
 
   const sortedEntries = useMemo(() => {
+    if (sortOrder === "asc") {
+      return memoisedEntries.sort((a, b) => {
+        if (sortType === "label") {
+          return a.label.localeCompare(b.label);
+        } else if (sortType === "issuer") {
+          return a.issuer.localeCompare(b.issuer);
+        } else if (sortType === "usage count") {
+          return b.counter - a.counter;
+        } else if (sortType === "last used") {
+          return a.lastUsed && b.lastUsed
+            ? b.lastUsed.getTime() - a.lastUsed.getTime()
+            : 0;
+        }
+        return 0;
+      });
+    }
     return memoisedEntries.sort((a, b) => {
       if (sortType === "label") {
-        return sortOrder === "asc"
-          ? a.label.localeCompare(b.label)
-          : b.label.localeCompare(a.label);
+        return b.label.localeCompare(a.label);
       } else if (sortType === "issuer") {
-        return sortOrder === "asc"
-          ? a.issuer.localeCompare(b.issuer)
-          : b.issuer.localeCompare(a.issuer);
+        return b.issuer.localeCompare(a.issuer);
       } else if (sortType === "usage count") {
-        return sortOrder === "asc"
-          ? a.counter - b.counter
-          : b.counter - a.counter;
+        return b.counter - a.counter;
       } else if (sortType === "last used") {
-        return sortOrder === "asc"
-          ? (a.lastUsed &&
-              b.lastUsed &&
-              a.lastUsed.getTime() - b.lastUsed.getTime()) ||
-              0
-          : (b.lastUsed &&
-              a.lastUsed &&
-              b.lastUsed.getTime() - a.lastUsed.getTime()) ||
-              0;
+        return b.lastUsed && a.lastUsed
+          ? b.lastUsed.getTime() - a.lastUsed.getTime()
+          : 0;
       }
       return 0;
     });
@@ -180,6 +204,7 @@ export default function Home() {
           backdropFilter: "brightness(0.3)",
           display: latest ? "block" : "none",
         }}
+        onClick={() => setLatest(null)}
       ></Box>
 
       <Grid p="md" align="stretch" justify="start" style={{ height: "100%" }}>
@@ -210,6 +235,3 @@ export default function Home() {
     </Stack>
   );
 }
-
-// TODO: lock user after 3 failed attempts
-// TODO: add logging for every step, exlude secrets

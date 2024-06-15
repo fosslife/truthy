@@ -156,10 +156,6 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
           <Button onClick={openChangePassword}>Change master password</Button>
         </Group>
       </Stack>
-      {/* planned settings:
-        1. Export
-        2. Change master password      
-      */}
 
       <ImportModal
         isOpen={importOpen}
