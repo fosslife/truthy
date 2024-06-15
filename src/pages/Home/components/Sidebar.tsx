@@ -18,6 +18,8 @@ import { ImportModal } from "../../../components/Modals/ImportModal";
 import { useSettings, Settings } from "../../../contexts/Settings";
 import { ExportModal } from "../../../components/Modals/ExportModal";
 import { ChangePasswordModal } from "../../../components/Modals/ChangePasswordModal";
+import { baseColors } from "../../../utils/random";
+import { useTheme } from "../../../contexts/Theme";
 
 type Props = {
   drawerOpened: boolean;
@@ -39,6 +41,8 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
   ] = useDisclosure();
 
   const { settings, setSettings } = useSettings();
+
+  const { color, changePrimaryColor } = useTheme();
 
   const theme = useMantineTheme();
 
@@ -73,9 +77,22 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
       title="Settings"
     >
       <Stack>
-        <Title c="brand" order={6}>
+        <Title c={color} order={6}>
           Appearance
         </Title>
+        <Group px="lg" justify="space-between">
+          <Text>Theme</Text>
+          <Select
+            w={"100"}
+            allowDeselect={false}
+            data={[...baseColors]}
+            value={settings.theme}
+            onChange={(e) => {
+              changePrimaryColor(e as string);
+              saveAndMergeSettings({ theme: e as (typeof baseColors)[number] });
+            }}
+          />
+        </Group>
         <Group px="lg" justify="space-between">
           <Text>Colorscheme</Text>
           <Switch
@@ -123,7 +140,7 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
         </Group>
 
         <Divider />
-        <Title c="brand" order={6}>
+        <Title c={color} order={6}>
           Behaviour
         </Title>
         <Group px="lg" justify="space-between">
@@ -138,7 +155,7 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
         </Group>
         <Divider />
 
-        <Title c="brand" order={6}>
+        <Title c={color} order={6}>
           Import / Export
         </Title>
         <Group>
@@ -148,7 +165,7 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
 
         <Divider />
 
-        <Title c="brand" order={6}>
+        <Title c={color} order={6}>
           Security
         </Title>
 

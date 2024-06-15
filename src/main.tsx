@@ -17,6 +17,7 @@ import { SettingsContextProvider } from "./contexts/Settings";
 import EntryDetails from "./pages/New/indx";
 import { createDir, exists } from "@tauri-apps/api/fs";
 import { appDataDir } from "@tauri-apps/api/path";
+import { ThemeProvider } from "./contexts/Theme";
 
 const browserRouter = createBrowserRouter([
   {
@@ -30,27 +31,6 @@ const browserRouter = createBrowserRouter([
   { path: "/new", element: <EntryDetails /> },
   { path: "/edit/:id", element: <EntryDetails /> },
 ]);
-
-const myColor: MantineColorsTuple = [
-  "#ffeaf3",
-  "#fdd4e1",
-  "#f4a7bf",
-  "#ec779c",
-  "#e64f7e",
-  "#e3356b",
-  "#e22762",
-  "#c91a52",
-  "#b41149",
-  "#9f003e",
-];
-
-const theme = createTheme({
-  components: {},
-  primaryColor: "brand",
-  colors: {
-    brand: myColor,
-  },
-});
 
 (async () => {
   const appDatadir = await appDataDir();
@@ -66,7 +46,7 @@ const theme = createTheme({
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <MantineProvider defaultColorScheme={"dark"} theme={theme}>
+    <ThemeProvider>
       <Notifications
         styles={{
           root: {
@@ -82,6 +62,6 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           <RouterProvider router={browserRouter} />
         </SettingsContextProvider>
       </AppContextProvider>
-    </MantineProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 
 const colorshade = [4, 5, 6, 7, 8, 9];
 
-export const colors = [
+export const baseColors = [
   "gray",
   "red",
   "pink",
@@ -16,7 +16,10 @@ export const colors = [
   "yellow",
   "orange",
   "teal",
-].map(
+  "brand",
+] as const;
+
+export const colors = baseColors.map(
   (c) => `${c}.${colorshade[Math.floor(Math.random() * colorshade.length)]}`
 );
 
