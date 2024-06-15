@@ -115,7 +115,6 @@ export function Card({ e, isLatest }: CardProps) {
               <Text>{decodeURIComponent(e.label || "")} </Text>
             </Tooltip>
           )}
-          last used time:{" "}
         </Flex>
       </Group>
       <ActionIcon
