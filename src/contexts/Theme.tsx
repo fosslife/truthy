@@ -32,7 +32,6 @@ export const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [primaryColor, setPrimaryColor] = useState<string>("brand");
 
   const theme = createTheme({
-    components: {},
     primaryColor,
     colors: {
       brand,

@@ -85,7 +85,7 @@ export const Sidebar = ({ closeDrawer, drawerOpened }: Props) => {
           <Select
             w={"100"}
             allowDeselect={false}
-            data={[...baseColors]}
+            data={[...baseColors, "dark"]}
             value={settings.theme}
             onChange={(e) => {
               changePrimaryColor(e as string);
