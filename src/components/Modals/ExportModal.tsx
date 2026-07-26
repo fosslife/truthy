@@ -1,8 +1,8 @@
 import { Button, Modal, Stack } from "@mantine/core";
 import { memo } from "react";
 import { useAppContext } from "../../contexts/App";
-import { confirm, save } from "@tauri-apps/api/dialog";
-import { writeTextFile, copyFile, BaseDirectory } from "@tauri-apps/api/fs";
+import { confirm, save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile, copyFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 import { notifications } from "@mantine/notifications";
 
 type ExportModalProps = {
@@ -130,7 +130,7 @@ function ExportModalBase({ isOpen, onClose }: ExportModalProps) {
 
     if (path) {
       await copyFile("vault.kdbx", path, {
-        dir: BaseDirectory.AppData,
+        fromPathBaseDir: BaseDirectory.AppData,
       });
       notifications.show({
         message: "Exported KDBX",

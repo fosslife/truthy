@@ -1,4 +1,4 @@
-import { readTextFile } from "@tauri-apps/api/fs";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import { OtpObject } from "../../pages/Home";
 import { randomColor } from "../random";
 import { getRandomId } from "../random";

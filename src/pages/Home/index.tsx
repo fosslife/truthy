@@ -11,7 +11,8 @@ import { Card } from "./components/Card";
 import { useSettings } from "../../contexts/Settings";
 import { savedb } from "../../utils/kdbx";
 import { KdbxEntry } from "kdbxweb";
-import { appWindow } from "@tauri-apps/api/window";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+const appWindow = getCurrentWebviewWindow()
 
 export type OtpObject = {
   id: string;

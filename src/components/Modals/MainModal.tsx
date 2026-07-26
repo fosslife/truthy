@@ -1,7 +1,7 @@
 import { Button, Drawer, Modal, Stack } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { invoke } from "@tauri-apps/api";
-import { open } from "@tauri-apps/api/dialog";
+import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import { parseOTPAuthURL } from "../../utils/parseOtpAuthURL";
 import { TOTP } from "totp-generator";
 import { memo } from "react";

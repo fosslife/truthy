@@ -1,9 +1,14 @@
 import type { OtpObject } from "../pages/Home";
-import { parseURL } from "whatwg-url";
 
 export function parseOTPAuthURL(url: string): OtpObject {
-  const whatwgURL = parseURL(url);
-  const params = new URLSearchParams(whatwgURL?.query || "");
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("Invalid OTPAuth URL");
+  }
+
+  const params = parsed.searchParams;
 
   const algomap: Record<string, string> = {
     SHA1: "SHA-1",
@@ -14,7 +19,7 @@ export function parseOTPAuthURL(url: string): OtpObject {
   let algorithm = params.get("algorithm") || "SHA1";
 
   let otpObject: Partial<OtpObject> = {
-    label: decodeURIComponent(whatwgURL?.path[0] || ""),
+    label: decodeURIComponent(parsed.pathname.replace(/^\//, "")),
     issuer: params.get("issuer") || "",
     secret: params.get("secret") || "",
     algorithm: algomap[algorithm],

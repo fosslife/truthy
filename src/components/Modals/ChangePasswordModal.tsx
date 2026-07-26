@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useAppContext } from "../../contexts/App";
 import kdbxweb, { savedb } from "../../utils/kdbx";
 import { notifications } from "@mantine/notifications";
-import { BaseDirectory, readTextFile } from "@tauri-apps/api/fs";
+import { BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 import { _base64ToArrayBuffer } from "../../utils/byte-utils";
 
 type ChangePasswordModalProps = {
@@ -34,7 +34,7 @@ export function ChangePasswordModal({
         kdbxweb.ProtectedValue.fromString(currentPassword)
       );
       const b64 = await readTextFile("vault.kdbx", {
-        dir: BaseDirectory.AppData,
+        baseDir: BaseDirectory.AppData,
       });
       const contents = _base64ToArrayBuffer(b64);
       await kdbxweb.Kdbx.load(contents, creds);

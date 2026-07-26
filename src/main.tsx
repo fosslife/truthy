@@ -11,7 +11,7 @@ import { AppContextProvider } from "./contexts/App";
 import Home from "./pages/Home";
 import { SettingsContextProvider } from "./contexts/Settings";
 import EntryDetails from "./pages/New/indx";
-import { createDir, exists } from "@tauri-apps/api/fs";
+import { mkdir, exists } from "@tauri-apps/plugin-fs";
 import { appDataDir } from "@tauri-apps/api/path";
 import { ThemeProvider } from "./contexts/Theme";
 
@@ -35,7 +35,7 @@ const browserRouter = createBrowserRouter([
   const addExists = await exists(appDatadir);
   console.log("app dir exists?", addExists);
   if (!addExists) {
-    await createDir(appDatadir);
+    await mkdir(appDatadir);
     console.log("App dir created");
   }
 })();

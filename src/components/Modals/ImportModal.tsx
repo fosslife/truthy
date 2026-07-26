@@ -1,5 +1,5 @@
 import { Button, Divider, Modal, Radio, Stack } from "@mantine/core";
-import { open } from "@tauri-apps/api/dialog";
+import { open } from "@tauri-apps/plugin-dialog";
 import { memo, useState } from "react";
 import { AegisImporter } from "../../utils/importers";
 import { notifications } from "@mantine/notifications";

@@ -1,7 +1,7 @@
 import * as kdbxweb from "kdbxweb";
-import { invoke } from "@tauri-apps/api";
 import { _arrayBufferToBase64, _base64ToArrayBuffer } from "./byte-utils";
-import { BaseDirectory, readTextFile, writeTextFile } from "@tauri-apps/api/fs";
+import { BaseDirectory, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
 
 export declare const Argon2TypeArgon2d = 0;
 export declare const Argon2TypeArgon2id = 2;
@@ -44,13 +44,13 @@ export async function savedb(contents: ArrayBuffer | undefined) {
   }
   const b64 = _arrayBufferToBase64(contents);
   await writeTextFile("vault.kdbx", b64, {
-    dir: BaseDirectory.AppData,
+    baseDir: BaseDirectory.AppData,
   });
 }
 
 export async function loaddb() {
   const b64 = await readTextFile("vault.kdbx", {
-    dir: BaseDirectory.AppData,
+    baseDir: BaseDirectory.AppData,
   });
 
   return _base64ToArrayBuffer(b64);

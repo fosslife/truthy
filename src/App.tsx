@@ -5,7 +5,7 @@ import {
   readTextFile,
   writeTextFile,
   exists,
-} from "@tauri-apps/api/fs";
+} from "@tauri-apps/plugin-fs";
 import { Button, Card, PasswordInput, Stack, Text, Title } from "@mantine/core";
 import { _arrayBufferToBase64, _base64ToArrayBuffer } from "./utils/byte-utils";
 import { notifications } from "@mantine/notifications";
@@ -49,7 +49,7 @@ function App() {
       const b64 = _arrayBufferToBase64(contents);
 
       await writeTextFile("vault.kdbx", b64, {
-        dir: BaseDirectory.AppData,
+        baseDir: BaseDirectory.AppData,
       });
       loadDb(db);
 
@@ -64,7 +64,7 @@ function App() {
       );
 
       const b64 = await readTextFile("vault.kdbx", {
-        dir: BaseDirectory.AppData,
+        baseDir: BaseDirectory.AppData,
       });
 
       const contents = _base64ToArrayBuffer(b64);
@@ -88,7 +88,7 @@ function App() {
   useEffect(() => {
     (async () => {
       const fileExists = await exists("vault.kdbx", {
-        dir: BaseDirectory.AppData,
+        baseDir: BaseDirectory.AppData,
       });
       setFirstTime(!fileExists);
     })();

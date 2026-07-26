@@ -14,11 +14,13 @@ import {
 import classes from "./Card.module.css";
 import { IconCheck, IconCopy, IconEdit } from "@tabler/icons-react";
 import { OtpObject } from "..";
-import { clipboard } from "@tauri-apps/api";
-import { appWindow } from "@tauri-apps/api/window";
+import {  } from "@tauri-apps/api";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../../../contexts/Settings";
 import { renderIcon } from "../../../utils/icons";
+import * as clipboard from "@tauri-apps/plugin-clipboard-manager"
+const appWindow = getCurrentWebviewWindow()
 
 type CardProps = {
   isLatest: boolean;
