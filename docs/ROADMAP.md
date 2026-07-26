@@ -400,8 +400,10 @@ opened offline with the technique in
 `vault.kdbx.bak` unlock and their `customData` settings parse as valid JSON. So the atomic write
 produces valid, decryptable vaults and the backup rotation preserves a valid previous generation.
 
-**Still unverified:** code generation and rendering with real entries, and copy-to-clipboard — the
-maintainer's test vault contains 0 entries, so those paths need an entry added first.
+**UI verified manually by the maintainer** (2026-07-26): adding entries works, codes render, and the
+countdown and 30-second refresh behave correctly — which also exercises the T-28 restructure of the
+code-generation path. Clipboard copy was not called out explicitly, so treat T-13 as touching
+unverified ground.
 
 **Why.** `savedb()` uses `writeTextFile`, which truncates and then writes. A crash, power cut, or
 full disk mid-write leaves a truncated vault, and there are no backups by design — that is every
@@ -951,9 +953,9 @@ and `image` (affects T-27); the exact scope of the NCC Group audit of RustCrypto
   still missing. A vault written by the new path was then unlocked offline (see
   [Inspecting a vault offline](#inspecting-a-vault-offline)), confirming both it and its rotated
   `.bak` are valid and decryptable. The same exercise **empirically proved T-03's Argon2 variant
-  mismatch** and confirmed the live KDF parameters are 1 MiB / 2 / 1. **Remaining gap:** code
-  generation, rendering, and copy-to-clipboard are still unexercised, because the test vault has 0
-  entries — add one and check codes render and tick over.
+  mismatch** and confirmed the live KDF parameters are 1 MiB / 2 / 1. The maintainer then verified the
+  UI by hand: adding entries, code rendering, the countdown, and the 30-second refresh all behave.
+  T-28 and T-01 are therefore verified end to end.
 - **2026-07-26** — Doc created from an initial read-only audit of commit `c720fae`. Decisions D-1
   through D-5 resolved by the maintainer; D-6 (kdbxweb replacement) raised and left open with a
   recommendation of Option B. T-02, T-03, T-07, T-12, T-24 moved to `BLOCKED` pending D-6, since
