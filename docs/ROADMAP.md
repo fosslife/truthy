@@ -181,6 +181,34 @@ Needed for confident work on T-04, T-26, T-06, and the substance of T-18:
 
 Keep them under `test/fixtures/`. **Generate them; never commit a vault containing a real secret.**
 
+### Inspecting a vault offline
+
+You can read and unlock a vault from Node without launching the app, which is far better than clicking
+through the UI for verifying storage changes. This was used to prove T-01 and T-03. Recreate it in a
+scratch directory (it needs nothing committed to the repo):
+
+1. **Header/KDF parameters, no password needed.** Base64-decode the file, then walk the KDBX4 outer
+   header: after the 12-byte magic+version come `[id: u8][len: u32][data]` fields terminated by
+   `id 0`. Field `id 11` is `KdfParameters`, a VariantDictionary — `u16` version, then
+   `[type: u8][keyLen: u32][key][valLen: u32][val]` entries terminated by `type 0`. Keys: `$UUID`
+   (KDF), `S` (salt), `M` (memory, u64 **bytes**), `I` (iterations, u64), `P` (parallelism, u32),
+   `V` (version). Argon2d UUID is `ef636ddf8c29444b91f7a9a403e30a0c`, Argon2id is
+   `9e298b1956db4773b23dfc3ec6f0a1e6`.
+2. **Full unlock.** kdbxweb runs fine under Node (WebCrypto is a global since Node 18) but needs an
+   Argon2 implementation. Build a tiny throwaway cargo binary depending on `rust-argon2` that takes
+   password/salt/params as hex and prints the raw hash, then register it via
+   `CryptoEngine.setArgon2Impl` and shell out with `execFileSync`. `cargo build --offline` works
+   because the crate is already vendored for the app. Symlink the repo's `node_modules` into the
+   scratch directory to get `kdbxweb`.
+3. Mirror `gethash` exactly: variant **Argon2id**, version `0x13`, and treat the `memory` argument as
+   **KiB** — kdbxweb has already divided by 1024 before calling the impl.
+
+**Two traps that cost time.** kdbxweb rejects a derived key whose `byteLength` isn't the requested
+length with a misleading `Unsupported: bad derived key`; in Node,
+`Buffer.from(hex, "hex").buffer` hands back the ~8KB *pooled* ArrayBuffer, so copy into an exact-size
+one (`new Uint8Array(buf).buffer`). And `Kdbx.load` mutates the buffer it is given, so pass a fresh
+slice if you intend to try more than one variant.
+
 ---
 
 ## Decisions
@@ -364,6 +392,16 @@ discarding the user's changes. Its dep array changed from `[]` to `[db]` — it 
 
 **Not done:** debouncing (T-24, blocked on D-6) and trimming the now-partly-unneeded fs write grants
 (T-11 — `writeTextFile` is still used by the export flows, so the permission must stay for now).
+
+**Verified.** 5 `cargo test` cases cover the write mechanics (including that a stale temp file from a
+crashed save can never be mistaken for the vault). Beyond that, a vault written by the new path was
+opened offline with the technique in
+[Inspecting a vault offline](#inspecting-a-vault-offline): both `vault.kdbx` and the rotated
+`vault.kdbx.bak` unlock and their `customData` settings parse as valid JSON. So the atomic write
+produces valid, decryptable vaults and the backup rotation preserves a valid previous generation.
+
+**Still unverified:** code generation and rendering with real entries, and copy-to-clipboard — the
+maintainer's test vault contains 0 entries, so those paths need an entry added first.
 
 **Why.** `savedb()` uses `writeTextFile`, which truncates and then writes. A crash, power cut, or
 full disk mid-write leaves a truncated vault, and there are no backups by design — that is every
@@ -553,6 +591,20 @@ derivation disagree.
 **The trap, worth stating plainly:** honoring the variant argument without a migration path locks the
 user out of their existing vault permanently. Any fix must trial-decrypt legacy-first and self-heal
 on unlock.
+
+**Empirically proven, not just inferred** (2026-07-26). A real vault was opened offline twice using
+the technique in [Inspecting a vault offline](#inspecting-a-vault-offline), with only the Argon2
+variant changed:
+
+| Derivation | Result |
+|---|---|
+| Argon2**id** (what `gethash` computes) | unlocks |
+| Argon2**d** (what the file header declares) | `InvalidKey` |
+
+The same vault's KDF parameters read back as Argon2d / 1 MiB / 2 iterations / 1 lane / v0x13, matching
+kdbxweb's defaults exactly. So the file is decryptable *only* under the app's non-standard derivation.
+This is the concrete confirmation that KeePassXC cannot open these vaults and that a naive fix is a
+lockout.
 
 **Do not start.** Same reasoning as T-02 — resolve D-6 first. The legacy-reader requirement survives
 into T-26 regardless.
@@ -873,6 +925,13 @@ Checked directly against the tree so nobody re-derives them. Versions: `kdbxweb@
 - Tauri's Rust `app.path().app_data_dir()` and the JS `BaseDirectory.AppData` resolve to the same
   directory (`~/Library/Application Support/com.fosslife.truthy` on macOS), which is what lets the
   Rust `save_vault` command and the JS read paths coexist.
+- **A live vault's KDF parameters read back as Argon2d / 1 MiB / 2 iterations / 1 lane / v0x13** —
+  kdbxweb's defaults, confirmed on a real file rather than inferred from library source.
+- **Deriving with Argon2d fails with `InvalidKey` on a vault this app wrote; Argon2id succeeds.**
+  Direct proof of T-03.
+- kdbxweb throws `Unsupported: bad derived key` when an Argon2 impl returns a buffer whose
+  `byteLength` differs from the requested length — a misleading message for what is usually Node's
+  pooled-`Buffer.buffer` trap. `Kdbx.load` also mutates the buffer passed to it.
 
 **Not verified — test before relying on it:** whether `window.prompt`, `window.confirm`, and `alert`
 function in Tauri v2 webviews on macOS, Windows, and Linux (affects T-09, T-23); whether Mantine
@@ -889,11 +948,12 @@ and `image` (affects T-27); the exact scope of the NCC Group audit of RustCrypto
   clippy + `cargo test`, and an advisory dependency audit; vault writes made atomic via a Rust
   `save_vault` command, with saves serialized and the window-close save no longer racing teardown. 5
   Rust tests cover the atomic write. T-18's Rust half is therefore started; the frontend runner is
-  still missing. **Verification gap:** the interactive smoke test could not be completed — unlocking
-  requires the master password, so the end-to-end save/persist path is covered by unit tests but has
-  not been exercised through the UI. Whoever picks this up next should confirm: unlock works, codes
-  render and tick over, a settings change persists across a restart, and `vault.kdbx.bak` appears
-  after the second save.
+  still missing. A vault written by the new path was then unlocked offline (see
+  [Inspecting a vault offline](#inspecting-a-vault-offline)), confirming both it and its rotated
+  `.bak` are valid and decryptable. The same exercise **empirically proved T-03's Argon2 variant
+  mismatch** and confirmed the live KDF parameters are 1 MiB / 2 / 1. **Remaining gap:** code
+  generation, rendering, and copy-to-clipboard are still unexercised, because the test vault has 0
+  entries — add one and check codes render and tick over.
 - **2026-07-26** — Doc created from an initial read-only audit of commit `c720fae`. Decisions D-1
   through D-5 resolved by the maintainer; D-6 (kdbxweb replacement) raised and left open with a
   recommendation of Option B. T-02, T-03, T-07, T-12, T-24 moved to `BLOCKED` pending D-6, since
