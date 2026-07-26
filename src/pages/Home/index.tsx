@@ -10,6 +10,7 @@ import { TOTP } from "totp-generator";
 import { Card } from "./components/Card";
 import { useSettings } from "../../contexts/Settings";
 import { savedb } from "../../utils/kdbx";
+import { notifications } from "@mantine/notifications";
 import { KdbxEntry } from "kdbxweb";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 const appWindow = getCurrentWebviewWindow()
@@ -109,15 +110,34 @@ export default function Home() {
   }, [latest]);
 
   useEffect(() => {
-    const unlisten = appWindow.onCloseRequested(async () => {
-      const content = await db?.save();
-      savedb(content);
+    const unlisten = appWindow.onCloseRequested(async (event) => {
+      // Hold the window open until the save has actually landed. Previously
+      // this neither awaited the write nor prevented the close, so the webview
+      // could be torn down mid-write -- closing the app normally was a
+      // corruption window.
+      event.preventDefault();
+      try {
+        const content = await db?.save();
+        await savedb(content);
+        await appWindow.destroy();
+      } catch (err) {
+        console.error("Could not save the vault on close", err);
+        notifications.show({
+          title: "Could not save your vault",
+          message:
+            "The window stayed open so your changes aren't lost. Try again, or check disk space.",
+          color: "red",
+          autoClose: false,
+        });
+        // Deliberately not destroying the window: discarding the user's changes
+        // is the exact failure this is meant to prevent.
+      }
     });
 
     return () => {
       unlisten.then((f) => f());
     };
-  }, []);
+  }, [db]);
 
   useEffect(() => {
     db?.meta.customData.set("sortType", { value: sortType });

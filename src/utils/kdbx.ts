@@ -1,6 +1,6 @@
 import * as kdbxweb from "kdbxweb";
 import { _arrayBufferToBase64, _base64ToArrayBuffer } from "./byte-utils";
-import { BaseDirectory, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 import { invoke } from "@tauri-apps/api/core";
 
 export declare const Argon2TypeArgon2d = 0;
@@ -41,14 +41,28 @@ kdbxweb.CryptoEngine.setArgon2Impl(
   }
 );
 
-export async function savedb(contents: ArrayBuffer | undefined) {
+// Saves are serialized through this chain so two concurrent writes can never
+// interleave in the temp file the Rust side writes through. Each caller awaits
+// its own result; a prior failure is neutralised for the *next* caller rather
+// than poisoning the chain forever.
+let saveChain: Promise<void> = Promise.resolve();
+
+export function savedb(contents: ArrayBuffer | undefined): Promise<void> {
   if (!contents) {
     throw new Error("No contents to save");
   }
   const b64 = _arrayBufferToBase64(contents);
-  await writeTextFile("vault.kdbx", b64, {
-    baseDir: BaseDirectory.AppData,
-  });
+
+  saveChain = saveChain
+    .catch(() => {})
+    .then(() => invoke<void>("save_vault", { contents: b64 }));
+
+  return saveChain;
+}
+
+/** Resolves once every queued save has finished (or failed). */
+export function flushSaves(): Promise<void> {
+  return saveChain.catch(() => {});
 }
 
 export async function loaddb() {

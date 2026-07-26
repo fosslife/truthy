@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
-import kdbxweb from "./utils/kdbx";
-import {
-  BaseDirectory,
-  readTextFile,
-  writeTextFile,
-  exists,
-} from "@tauri-apps/plugin-fs";
+import kdbxweb, { savedb } from "./utils/kdbx";
+import { BaseDirectory, readTextFile, exists } from "@tauri-apps/plugin-fs";
 import { Button, Card, PasswordInput, Stack, Text, Title } from "@mantine/core";
-import { _arrayBufferToBase64, _base64ToArrayBuffer } from "./utils/byte-utils";
+import { _base64ToArrayBuffer } from "./utils/byte-utils";
 import { notifications } from "@mantine/notifications";
 import { useAppContext } from "./contexts/App";
 import { useNavigate } from "react-router-dom";
@@ -44,13 +39,7 @@ function App() {
 
       const db = kdbxweb.Kdbx.create(creds, "truthy");
 
-      const contents = await db.save();
-
-      const b64 = _arrayBufferToBase64(contents);
-
-      await writeTextFile("vault.kdbx", b64, {
-        baseDir: BaseDirectory.AppData,
-      });
+      await savedb(await db.save());
       loadDb(db);
 
       navigate("/home");
