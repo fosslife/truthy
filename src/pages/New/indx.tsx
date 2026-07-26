@@ -118,7 +118,7 @@ function EntryDetails() {
       counter: 0,
       icon: icon,
       color,
-      otp: TOTP.generate(secret).otp,
+      otp: (await TOTP.generate(secret)).otp,
     };
 
     const entry = db?.createEntry(group!);

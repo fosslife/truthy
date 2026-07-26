@@ -17,7 +17,7 @@ function ExportModalBase({ isOpen, onClose }: ExportModalProps) {
     const confirmation = await confirm(
       "This will save all your secrets in a plain-text JSON file. Are you sure you want to continue?",
       {
-        type: "warning",
+        kind: "warning",
         okLabel: "Yes, I am sure",
         cancelLabel: "No, take me back",
       }
@@ -44,7 +44,7 @@ function ExportModalBase({ isOpen, onClose }: ExportModalProps) {
     const confirmation = await confirm(
       "This will save all your secrets in an encrypted JSON file. Are you sure you want to continue?",
       {
-        type: "warning",
+        kind: "warning",
         okLabel: "Yes, I am sure",
         cancelLabel: "No, take me back",
       }
@@ -83,7 +83,7 @@ function ExportModalBase({ isOpen, onClose }: ExportModalProps) {
     const confirmation = await confirm(
       "This will save all your secrets in a KDBX XML file. Are you sure you want to continue?",
       {
-        type: "warning",
+        kind: "warning",
         okLabel: "Yes, I am sure",
         cancelLabel: "No, take me back",
       }
@@ -114,7 +114,7 @@ function ExportModalBase({ isOpen, onClose }: ExportModalProps) {
     const confirmation = await confirm(
       "This will save all your secrets in a KDBX file. Are you sure you want to continue?",
       {
-        type: "warning",
+        kind: "warning",
         okLabel: "Yes, I am sure",
         cancelLabel: "No, take me back",
       }

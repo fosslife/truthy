@@ -34,7 +34,10 @@ kdbxweb.CryptoEngine.setArgon2Impl(
       //   version,
     });
 
-    return new Uint8Array([...hash]);
+    // kdbxweb's Argon2Fn expects an ArrayBuffer. The declared return type is
+    // Uint8Array, but Tauri serializes a Rust Vec<u8> as a number array at
+    // runtime, so spread to cover both shapes.
+    return new Uint8Array([...hash]).buffer;
   }
 );
 

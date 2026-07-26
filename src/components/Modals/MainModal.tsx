@@ -44,7 +44,7 @@ export function MainModalBase({ onClose, opened }: QrModalProps) {
         throw new Error("Invalid QR code");
         return;
       }
-      parsed["otp"] = TOTP.generate(parsed.secret).otp;
+      parsed["otp"] = (await TOTP.generate(parsed.secret)).otp;
       parsed["id"] = getRandomId();
       parsed["color"] = randomColor();
       parsed["digits"] = parsed["digits"] || 6;

@@ -131,15 +131,38 @@ export default function Home() {
     }
   };
 
+  // TOTP.generate became async in totp-generator 2.x, so codes are produced in
+  // an effect and merged onto the entries below. `time < 2` is kept verbatim as
+  // the refresh trigger so regeneration still happens once per period.
+  const [codes, setCodes] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, string> = {};
+      for (const e of entries) {
+        if (!e.secret) continue;
+        try {
+          next[e.id] = (await TOTP.generate(e.secret)).otp;
+        } catch (err) {
+          // A malformed secret throws ("Invalid base32 character in key").
+          // Skip that entry rather than losing every other code in the batch.
+          console.error(`Could not generate a code for ${e.label}`, err);
+        }
+      }
+      if (!cancelled) setCodes(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [entries, time < 2]);
+
   const memoisedEntries = useMemo(() => {
     return entries.map((e) => {
       if (!e.secret) return e;
-      return {
-        ...e,
-        otp: TOTP.generate(e.secret).otp,
-      };
+      return { ...e, otp: codes[e.id] ?? "" };
     });
-  }, [entries, time < 2]);
+  }, [entries, codes]);
 
   const sortedEntries = useMemo(() => {
     if (sortOrder === "asc") {
