@@ -5,7 +5,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { parseOTPAuthURL } from "../../utils/parseOtpAuthURL";
 import { TOTP } from "totp-generator";
 import { memo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { notifications } from "@mantine/notifications";
 import { getRandomId, randomColor } from "../../utils/random";

@@ -59,11 +59,12 @@ jobs:
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
   audit:
-    name: dependency audit (advisory)
+    name: cargo audit (advisory)
     runs-on: ubuntu-latest
-    # Non-blocking on purpose. Several dependencies are known to be stale
-    # (see T-27 in docs/ROADMAP.md) and triaging them is separate work. A gate
-    # that is red on arrival just teaches people to ignore CI.
+    # Non-blocking on purpose. The Rust dependencies are known to be stale
+    # (bardecoder, image, rust-argon2 — see T-27 in docs/ROADMAP.md) and
+    # triaging them is separate work. A gate that is red on arrival just
+    # teaches people to ignore CI.
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -73,6 +74,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: src-tauri
+
+  npm-audit:
+    name: pnpm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: setup pnpm
         uses: pnpm/action-setup@v4
@@ -86,5 +93,10 @@ jobs:
       - name: install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Blocking, unlike cargo audit: the frontend tree is clean as of this
+      # change, so a red run here means a genuinely new advisory rather than a
+      # backlog someone has to learn to ignore. If it fails without the
+      # dependencies having changed, check whether the advisory is newly
+      # published before assuming you broke something.
       - name: pnpm audit
         run: pnpm audit --audit-level high

@@ -1,2 +1,11 @@
 allowBuilds:
   esbuild: true
+
+overrides:
+  # kdbxweb 2.1.1 is the newest release and asks for ^0.7.4, but the whole 0.7
+  # line is unpatched against five high XML-injection/DoS advisories. kdbxweb
+  # only touches xmldom as a Node fallback — the webview supplies DOMParser and
+  # XMLSerializer, so it is dead code here, but it was still being bundled.
+  # Pinned to the 0.8 line on purpose: 0.9 dropped the `errorHandler`
+  # constructor option that kdbxweb's fallback passes. See T-27 in docs/ROADMAP.md.
+  "@xmldom/xmldom": ^0.8.13

@@ -83,7 +83,7 @@ Tauri-v1 webkitgtk 4.0 dep dropped from CI), and added `CLAUDE.md`. No applicati
 | T-15 | P1 | TODO | Delete the devtools-blocking theater; fix title/favicon |
 | T-16 | P1 | TODO | Validate `otpauth://` URIs properly |
 | T-24 | P1 | BLOCKED | Coalesce/debounce vault saves — **may be unnecessary after T-26** |
-| T-27 | P1 | TODO | Dependency health audit (kdbxweb is not the only stale one) |
+| T-27 | P1 | TODO | Dependency health audit — frontend half done, Rust crates outstanding |
 | T-17 | P2 | DONE | CI: typecheck + clippy on push/PR |
 | T-18 | P2 | TODO | Test harness + fixtures |
 | T-19 | P2 | TODO | Stop eagerly bundling ~900 SVGs |
@@ -756,34 +756,82 @@ committing to T-07's numbers.
 until D-6 lands.
 
 ### T-27 · Dependency health audit
-**Status:** TODO · **Priority:** P1 · **Depends on:** —
+**Status:** TODO (frontend half done) · **Priority:** P1 · **Depends on:** —
 
 kdbxweb prompted D-6, but it isn't the only stale dependency, and a password manager should know the
-maintenance status of everything in its trust path. Known suspects (verify current state rather than
-trusting this list):
+maintenance status of everything in its trust path.
+
+**Still outstanding — the Rust side.** These are unchanged and are what keeps this item open (verify
+current state rather than trusting this list):
 
 - **`bardecoder 0.5.0`** — QR decoding, appears dormant since ~2021. `rqrr` is the maintained
   alternative. This crate parses untrusted image input, so it's genuinely security-relevant.
 - **`image 0.24.9`** — several majors behind current, and also on the untrusted-input path.
 - **`rust-argon2 2.1.0`** — works, but RustCrypto's `argon2` is more actively developed and would be
   the natural choice if T-26 goes ahead.
-- Frontend: audit whether anything else in the vault path is unmaintained.
 
-**Plan.** Add `cargo audit` (and `pnpm audit`) to CI as part of T-17, then triage. Deliberately
-separate from T-26 so the storage decision doesn't block routine hygiene.
+**Done — the frontend half (2026-07-26).** Once T-17 put `pnpm audit --audit-level high` in CI, it
+reported 6 high advisories on arrival. Both causes are now resolved and the frontend tree is clean:
+
+- **`@xmldom/xmldom` 0.7.13 → `^0.8.13`, forced through an `overrides` entry in
+  `pnpm-workspace.yaml`.** Five of the six advisories were XML injection and uncontrolled-recursion
+  issues in xmldom's serializer (GHSA-wh4c-j3r5-mjhp, GHSA-2v35-w6hq-6mfw, GHSA-f6ww-3ggp-fr8h,
+  GHSA-x6wf-f3px-wcqx, GHSA-j759-j44w-7fr8), reached transitively via `kdbxweb`. The entire 0.7 line
+  is unpatched, and `kdbxweb@2.1.1` — the newest published version, so there is nothing to upgrade
+  to — declares `"@xmldom/xmldom": "^0.7.4"`, which cannot resolve to 0.8.x. An override is
+  therefore the only route.
+
+  Worth knowing before touching this: **xmldom never executes in Truthy, but it was still being
+  shipped.** `createDOMParser()`/`createXMLSerializer()` in `kdbxweb/dist/kdbxweb.js` return
+  `globalThis.DOMParser`/`globalThis.XMLSerializer` when those exist and only fall back to
+  `require("@xmldom/xmldom")` under Node. A Tauri webview always provides both, so the vulnerable
+  code is unreachable at runtime — yet the bundler still pulls it into `dist/assets/index-*.js`. The
+  override is bundle hygiene, and it correspondingly *cannot* regress vault parsing, since the path
+  it changes is never taken.
+
+  Pinned to the 0.8 line deliberately, not to `latest` (0.9.x): 0.9 removed the `errorHandler`
+  constructor option that kdbxweb's Node fallback passes to `new DOMParser(...)`. Unreachable here,
+  but there is no reason to leave a landmine for whoever runs kdbxweb outside a webview.
+
+  Note that **pnpm 11 no longer reads a `pnpm.overrides` block from `package.json`** — it warns and
+  ignores it. Overrides live in `pnpm-workspace.yaml`, which is where the annotated entry sits.
+
+- **`react-router-dom@^7.18.1` dropped for `react-router@^8.3.0`.** The sixth advisory,
+  GHSA-qwww-vcr4-c8h2, is an RSC-mode CSRF bypass, patched only in 8.3.0. It was **not exploitable
+  here** — Truthy is a client-only SPA on `createBrowserRouter` with no server, no RSC, and no
+  actions — so suppressing it via `pnpm audit --ignore` was a legitimate option. The maintainer chose
+  the upgrade instead, to avoid carrying a standing suppression that nobody would revisit.
+
+  v8 deletes the `react-router-dom` package. Six files changed imports: core APIs
+  (`createBrowserRouter`, `useNavigate`, `Navigate`, `useParams`) now come from `"react-router"`, and
+  `RouterProvider` alone from `"react-router/dom"`. The route table and the
+  `if (!db) return <Navigate to="/" />` idle-logout guard needed no changes. v8's peer floors are
+  React `>=19.2.7`, Vite 7+, and Node `>=22.22.0`; the project satisfies all three, but the React
+  floor is cleared by a single patch version, so **pinning React downward will break this**.
+
+`pnpm audit --audit-level high` is now a **blocking** CI job (`npm-audit` in `check.yml`), separate
+from the still-advisory `cargo audit` job. That split is the point: the frontend tree is clean, so it
+can carry a real gate, while the Rust suspects above stay advisory until this item is finished.
+
+**Remaining plan.** Triage the three crates above. Deliberately separate from T-26 so the storage
+decision doesn't block routine hygiene.
 
 ---
 
 ## P2 — quality and infrastructure
 
 ### T-17 · CI: typecheck + clippy on push/PR
-**Status:** TODO · **Priority:** P2
+**Status:** DONE · **Priority:** P2
 
-`pnpm build` (i.e. `tsc`) is currently the *only* automated gate in the project, and nothing runs it
-on push. Add `.github/workflows/check.yml` running `pnpm install --frozen-lockfile`, `pnpm build`,
-and `cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings`; fold in `cargo audit` for
-T-27. Cheapest high-leverage item in this doc — worth doing before any storage-layer work so the
-risky changes have a gate under them.
+Before this landed, `pnpm build` (i.e. `tsc`) was the *only* automated gate in the project and
+nothing ran it on push. `.github/workflows/check.yml` now runs, on every push to `master` and every
+PR: `pnpm install --frozen-lockfile` + `pnpm build` (blocking), `cargo clippy ... -- -D warnings` and
+`cargo test` (blocking), and the dependency audits for T-27.
+
+The audits started as a single advisory job. As of 2026-07-26 they are split, because the two halves
+are in different states: `cargo audit` stays `continue-on-error: true` while the stale crates in T-27
+go untriaged, and `pnpm audit --audit-level high` is its own **blocking** `npm-audit` job now that
+the frontend tree is clean. See T-27 for what was fixed to make that possible.
 
 ### T-18 · Test harness + fixtures
 **Status:** TODO (Rust side started) · **Priority:** P2 · **Soft-blocks:** T-04, T-06, T-26
@@ -945,6 +993,22 @@ and `image` (affects T-27); the exact scope of the NCC Group audit of RustCrypto
 
 ## Changelog
 
+- **2026-07-26 (latest)** — **T-27's frontend half landed; `pnpm audit` is now a blocking gate.** The
+  audit job T-17 added was red on arrival with 6 high advisories. Five were `@xmldom/xmldom` 0.7.13,
+  reached through `kdbxweb@2.1.1`, whose declared `^0.7.4` cannot resolve to the patched 0.8 line and
+  which has no newer release; pinned to `^0.8.13` via an annotated `overrides` entry in
+  `pnpm-workspace.yaml` (**not** `package.json` — pnpm 11 ignores `pnpm.overrides` there). Established
+  while investigating: xmldom is unreachable at runtime because the webview supplies `DOMParser` and
+  `XMLSerializer`, but it was being bundled anyway, so the override is bundle hygiene that cannot
+  affect vault parsing. The sixth advisory was an RSC-only CSRF bypass in `react-router`, likewise not
+  exploitable in a client-only SPA; the maintainer chose to migrate `react-router-dom@7` →
+  `react-router@^8.3.0` rather than carry a suppression, which moved `RouterProvider` to
+  `"react-router/dom"` and the other four router APIs to `"react-router"` across six files. The audit
+  job was then split: `cargo audit` stays advisory pending the rest of T-27, `pnpm audit` blocks.
+  Verified so far: `pnpm audit --audit-level high` exits 0 and `pnpm build` (tsc + vite) passes.
+  **Not yet verified by hand:** nothing in CI opens a vault or renders a route, so the router
+  migration still needs a `pnpm tauri dev` pass — unlock, add an entry, and visit `/`, `/home`,
+  `/new`, `/edit/:id` — before this is considered done end to end.
 - **2026-07-26 (later)** — **T-28, T-17, T-01 landed** (`b82634c`, `a569702`, `d413a24`, `f4fb98c`).
   Build repaired (it was broken on `master` at `670eaf7`); CI added with a blocking typecheck, blocking
   clippy + `cargo test`, and an advisory dependency audit; vault writes made atomic via a Rust

@@ -2,7 +2,7 @@ import { Box, Grid, Stack, useMantineColorScheme } from "@mantine/core";
 import { Navbar } from "./components/Navbar";
 import { useTimer } from "../../utils/hooks/useTimer";
 import { useAppContext } from "../../contexts/App";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { useDisclosure, useIdle } from "@mantine/hooks";
 import { MainModal } from "../../components/Modals/MainModal";
 import { useEffect, useMemo, useState } from "react";

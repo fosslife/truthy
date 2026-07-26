@@ -24,7 +24,7 @@ import { useState, useEffect } from "react";
 import { TOTP } from "totp-generator";
 
 import { OtpObject } from "../Home";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router";
 import { IconArrowLeft, IconEdit } from "@tabler/icons-react";
 import { randomColor } from "../../utils/random";
 import { getRandomId } from "../../utils/random";

@@ -5,7 +5,7 @@ import { Button, Card, PasswordInput, Stack, Text, Title } from "@mantine/core";
 import { _base64ToArrayBuffer } from "./utils/byte-utils";
 import { notifications } from "@mantine/notifications";
 import { useAppContext } from "./contexts/App";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 function App() {
   const [password, setPassword] = useState("");

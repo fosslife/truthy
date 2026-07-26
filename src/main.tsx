@@ -6,7 +6,8 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 
 import { Notifications } from "@mantine/notifications";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from "react-router";
+import { RouterProvider } from "react-router/dom";
 import { AppContextProvider } from "./contexts/App";
 import Home from "./pages/Home";
 import { SettingsContextProvider } from "./contexts/Settings";
