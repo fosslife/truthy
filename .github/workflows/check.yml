@@ -1,0 +1,87 @@
+name: check
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  frontend:
+    name: typecheck + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "pnpm"
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `pnpm build` is `tsc && vite build`. tsc is the only type gate the
+      # project has, so this job is the reason CI exists.
+      - name: typecheck and build
+        run: pnpm build
+
+  rust:
+    name: clippy
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # The tauri crate won't build on Linux without these.
+      - name: install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: clippy
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+  audit:
+    name: dependency audit (advisory)
+    runs-on: ubuntu-latest
+    # Non-blocking on purpose. Several dependencies are known to be stale
+    # (see T-27 in docs/ROADMAP.md) and triaging them is separate work. A gate
+    # that is red on arrival just teaches people to ignore CI.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: cargo audit
+        uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src-tauri
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "pnpm"
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: pnpm audit
+        run: pnpm audit --audit-level high
