@@ -61,13 +61,19 @@ async fn save_vault(app: tauri::AppHandle, contents: String) -> Result<(), Strin
         .app_data_dir()
         .map_err(|e| format!("could not resolve the app data directory: {e}"))?;
 
-    fs::create_dir_all(&dir).map_err(|e| format!("could not create {}: {e}", dir.display()))?;
+    write_vault_atomically(&dir, contents.as_bytes())
+}
+
+/// The filesystem half of [`save_vault`], split out so it can be tested without
+/// an `AppHandle`. See that function for why the sequence is what it is.
+fn write_vault_atomically(dir: &Path, contents: &[u8]) -> Result<(), String> {
+    fs::create_dir_all(dir).map_err(|e| format!("could not create {}: {e}", dir.display()))?;
 
     let vault = dir.join(VAULT);
     let tmp = dir.join(VAULT_TMP);
     let bak = dir.join(VAULT_BAK);
 
-    write_synced(&tmp, contents.as_bytes())
+    write_synced(&tmp, contents)
         .map_err(|e| format!("could not write {}: {e}", tmp.display()))?;
 
     if vault.exists() {
@@ -81,7 +87,7 @@ async fn save_vault(app: tauri::AppHandle, contents: String) -> Result<(), Strin
     // Make the rename itself durable. Best-effort: a failure here means the
     // directory entry may not survive a power cut, but the data is written.
     #[cfg(unix)]
-    if let Ok(handle) = fs::File::open(&dir) {
+    if let Ok(handle) = fs::File::open(dir) {
         let _ = handle.sync_all();
     }
 
@@ -138,4 +144,82 @@ async fn gethash(
     };
 
     argon2::hash_raw(&password, &salt, &config).unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A fresh, empty directory unique to this test binary and case.
+    fn scratch(name: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("truthy-test-{}-{name}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        dir
+    }
+
+    fn read(path: &Path) -> String {
+        fs::read_to_string(path).expect("file should exist")
+    }
+
+    #[test]
+    fn creates_the_directory_and_writes_a_new_vault() {
+        let dir = scratch("new");
+
+        write_vault_atomically(&dir, b"first").expect("save should succeed");
+
+        assert_eq!(read(&dir.join(VAULT)), "first");
+        // Nothing to back up on the very first save.
+        assert!(!dir.join(VAULT_BAK).exists());
+        assert!(!dir.join(VAULT_TMP).exists(), "temp file must not linger");
+    }
+
+    #[test]
+    fn keeps_the_previous_contents_as_a_backup() {
+        let dir = scratch("backup");
+
+        write_vault_atomically(&dir, b"first").unwrap();
+        write_vault_atomically(&dir, b"second").unwrap();
+
+        assert_eq!(read(&dir.join(VAULT)), "second");
+        assert_eq!(read(&dir.join(VAULT_BAK)), "first");
+        assert!(!dir.join(VAULT_TMP).exists(), "temp file must not linger");
+    }
+
+    #[test]
+    fn backup_tracks_only_the_immediately_previous_save() {
+        let dir = scratch("generations");
+
+        for contents in ["one", "two", "three"] {
+            write_vault_atomically(&dir, contents.as_bytes()).unwrap();
+        }
+
+        assert_eq!(read(&dir.join(VAULT)), "three");
+        assert_eq!(read(&dir.join(VAULT_BAK)), "two");
+    }
+
+    /// The point of the whole exercise: a half-written temp file from a crashed
+    /// save must never be mistaken for the vault.
+    #[test]
+    fn a_stale_temp_file_does_not_corrupt_the_vault() {
+        let dir = scratch("stale-tmp");
+        write_vault_atomically(&dir, b"good").unwrap();
+
+        fs::write(dir.join(VAULT_TMP), b"truncated garbage").unwrap();
+        write_vault_atomically(&dir, b"better").unwrap();
+
+        assert_eq!(read(&dir.join(VAULT)), "better");
+        assert_eq!(read(&dir.join(VAULT_BAK)), "good");
+        assert!(!dir.join(VAULT_TMP).exists());
+    }
+
+    #[test]
+    fn writes_are_byte_exact_for_base64_payloads() {
+        let dir = scratch("payload");
+        // The vault is stored as base64 text; make sure nothing mangles it.
+        let payload = "AAECAwQFBgcICQ==\n";
+
+        write_vault_atomically(&dir, payload.as_bytes()).unwrap();
+
+        assert_eq!(read(&dir.join(VAULT)), payload);
+    }
 }

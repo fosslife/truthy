@@ -55,6 +55,9 @@ jobs:
       - name: clippy
         run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
+      - name: test
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
   audit:
     name: dependency audit (advisory)
     runs-on: ubuntu-latest
